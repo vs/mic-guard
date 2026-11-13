@@ -13,6 +13,17 @@
 import CoreAudio
 import Foundation
 
+let version = "0.1.0"
+
+let usage = """
+    usage: mic-guard <device-name-pattern>...
+           mic-guard --list | --version | --help
+
+    Whenever the default input becomes a device whose name contains one of the
+    patterns (case-insensitive), switch it to the built-in microphone.
+
+    """
+
 let system = AudioObjectID(kAudioObjectSystemObject)
 
 func address(_ selector: AudioObjectPropertySelector,
@@ -77,16 +88,25 @@ func builtInMicrophone() -> AudioDeviceID? {
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 
-if arguments == ["--list"] {
+switch arguments {
+case ["--list"]:
     let current = defaultInput()
     for device in allDevices() where hasInput(device) {
         print("\(device == current ? "*" : " ") \(name(of: device))")
     }
     exit(0)
+case ["--version"]:
+    print("mic-guard \(version)")
+    exit(0)
+case ["--help"], ["-h"]:
+    print(usage, terminator: "")
+    exit(0)
+default:
+    break
 }
 
 guard !arguments.isEmpty, !arguments.contains(where: { $0.hasPrefix("-") }) else {
-    FileHandle.standardError.write(Data("usage: mic-guard <device-name-pattern>... | mic-guard --list\n".utf8))
+    FileHandle.standardError.write(Data(usage.utf8))
     exit(2)
 }
 
